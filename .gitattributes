@@ -1,0 +1,14 @@
+# Giữ đúng kiểu file để nhóm không làm hỏng file nhị phân khi clone trên Windows.
+* text=auto
+*.pdf binary
+*.png binary
+*.jpg binary
+*.sof binary
+*.pof binary
+
+# BDF/BSF là file văn bản của Quartus; khai báo tường minh để không bị coi là nhị phân.
+*.bdf text
+*.bsf text
+*.qsf text
+*.qpf text
+*.sdc text

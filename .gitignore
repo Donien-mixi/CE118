@@ -1,0 +1,21 @@
+# Chỉ chia sẻ: docs/, roadmap.md, đề bài, blocks/.
+# Mọi thứ dưới đây ở lại máy, không đẩy lên repo.
+
+# Báo cáo tham khảo của nhóm khác — không phải tài liệu của nhóm
+Report_Final*.pdf
+
+# Ghi chú phiên làm việc và skill của harness (công cụ cá nhân)
+handoff.md
+.dsh/
+
+# Project Quartus của các lab trước (nặng, có bản riêng)
+CE118_lab/
+
+# Rác build Quartus (nếu sau này thêm quartus/)
+db/
+incremental_db/
+output_files/
+simulation/
+*.qws
+*.sof
+*.pof
