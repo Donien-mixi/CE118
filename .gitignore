@@ -19,3 +19,6 @@ simulation/
 *.qws
 *.sof
 *.pof
+
+# Thu muc kiem chung tam (BDF -> Verilog, ModelSim work)
+.verify/

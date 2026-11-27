@@ -25,16 +25,16 @@ skill `ce118-cordic-spec` (con số), `ce118-report-vn` (cách trình bày).
 
 | Trong `blocks/` | Dùng thế nào |
 |---|---|
-| `fa1` | gọi trực tiếp trong `add_sub24`, `neg24`, `counter4` |
-| `mux2_1` | mux 1 bit lẻ |
+| `fa1` | gọi trực tiếp trong `add_sub24`, `neg24`, `counter4` — ✅ đã kiểm: `S=A^B^Cin`, `Cout=AB+(A^B)Cin` |
+| `mux2_1` | mux 1 bit — ✅ `SEL=0→D0`, `SEL=1→D1` |
 | `mux2_8` | 2 tấn → `mux2_16`, 3 tấn → `mux2_24`, 4 tấn → `shifter24` mỗi tầng |
-| `mux4_8` | 3 tấn → `mux4_24` |
-| `reg8` | 2 tấn → `reg16`, 3 tấn → `reg24` (**phải sửa reset**) |
-| `decoder2_4` | giải mã 3 trạng thái trong `controller` |
-| `addsub8` | **chỉ để xem mẫu**, không ghép được (thiếu `Cin`) |
-| `eq4_07` | mẫu so sánh hằng, đổi 7 → 15 |
-| `count2` | mẫu bộ đếm có `LOAD`/`STEP`, mở rộng lên 4 bit |
-| `state_to_hex` | mẫu giải mã 7 đoạn (DE2) |
+| `mux4_8` | 3 tấn → `mux4_24` — ✅ `SEL` chuẩn `00→D0 … 11→D3` |
+| `reg8` | 2 tấn → `reg16`, 3 tấn → `reg24` (**phải sửa reset, §1.4**) — ⚠️ reset bất đồng bộ mức thấp |
+| `decoder2_4` | giải mã 3 trạng thái trong `controller` — ✅ `W0..W3` ứng `00,01,10,11` |
+| `addsub8` | ⚠️ thiếu `Cin` → **sửa thành `addsub8c`** rồi ghép 3 tấn (`§1.5`) — đã mô phỏng PASS |
+| `eq4_07` | ❌ **không dùng**: so với **7**, `EQ=(A0·A1)(A2·¬A3)`. Vẽ `cmp15` mới |
+| `count2` | ✅ **dùng trực tiếp**: ghép 2 tấn → `counter4`, `LOAD=1` nạp 0 đồng bộ |
+| `state_to_hex` | ❌ **không dùng**: đã chuyển sang Verilog, thấy `H1=0` cố định và `H0=H3` → **không phải** giải mã số 0–3. Viết `seg7` mới |
 
 ---
 
@@ -64,29 +64,67 @@ skill `ce118-cordic-spec` (con số), `ce118-report-vn` (cách trình bày).
 
 ## 1.4 Sửa `reg8` cho reset đồng bộ mức cao (bắt buộc)
 
-`reg8` gốc: `RESET_N` → chân `CLRN` của `DFFE` (xoá ngay, không chờ clock).
+`reg8` gốc, sau khi Quartus chuyển sang Verilog:
 
-Cách đúng spec, vẽ thành `reg8_sync`:
+```verilog
+always@(posedge CLK or negedge RESET_N or negedge VCC)
+  if (!RESET_N) Q <= 0; else if (EN) Q <= D;
+```
 
-1. Mở `reg8.bdf` (đừng sửa file gốc — Save As thành `reg8_sync.bdf`).
-2. Nối `PRN` và `CLRN` của cả 8 `DFFE` **lên VCC**.
-3. Thêm 8 cổng `AND2`: `D_eff[i] = D[i] AND (NOT RST)`; đầu ra `AND2` vào `D` của `DFFE`.
-4. Đổi cổng `RESET_N` thành `RST` (mức 1 = reset).
-5. `EN` giữ nguyên vào chân `ENA`.
+Tức `RESET_N` vào chân `CLRN` → **bất đồng bộ, mức thấp** (xoá ngay, không chờ clock).
 
-Kết quả: reset chỉ tác dụng ở cạnh clock → đúng yêu cầu T04.
+**Cách bọc đúng — 2 điều kiện, thiếu một là sai:**
+
+1. Vô hiệu hoá `CLRN`: nối `RESET_N = VCC`, `PRN = VCC`.
+2. Chặn dữ liệu **và** ép enable:
+   - `D_eff = RST ? 0 : D` → dùng **một `mux2_8`**: `D0 = D`, `D1 = GND`, `SEL = RST`.
+   - `EN_eff = EN OR RST` → **một cổng `OR2`**.
+
+> **Bẫy:** nếu chỉ chặn `D` mà để `EN` đi thẳng, reset sẽ **không xoá được** khi `LOAD_*`
+> = 0 — đúng là trạng thái lúc reset trong `datapath`. Đã kiểm bằng mô phỏng: biến thể
+> "chỉ chặn D" giữ nguyên `0xA5` sau 3 cạnh clock có `RST=1`; biến thể `EN|RST` xoá về 0.
+
+Các bước vẽ `reg8_sync.bdf`:
+
+1. `Save As` từ `reg8.bdf` → `reg8_sync.bdf` (giữ file gốc).
+2. Xoá 4 cổng I/O cũ (`D`, `CLK`, `RESET_N`, `EN`), giữ 8 `DFFE` và dây bên trong.
+3. Chèn `mux2_8`, `OR2`, `GND`, `VCC`.
+4. Nối: `mux2_8.D0 = D` (cổng vào mới), `D1 = GND`, `SEL = RST`; `mux2_8.Y` → `D` của 8 `DFFE`;
+   `OR2(D0 = EN, D1 = RST)` → `ENA` của 8 `DFFE`; `CLRN` và `PRN` → `VCC`.
+5. Thêm cổng ra `Q[7:0]`; `File → Create/Update → Create Symbol Files`.
+
+**Kiểm (đã chạy, 11/11 PASS):** `RST=1` không tác dụng giữa chu kỳ; xoá đúng ở cạnh clock;
+xoá được **dù `EN=0`**; khi `RST` và `EN` cùng bật thì reset thắng, không nạp `D`.
 
 ## 1.5 `add_sub24` — bộ cộng/trừ 24 bit
 
 - **Cổng**: `A[23:0], B[23:0], Sub` → `S[23:0]`
-- **Bên trong**: 24 × `fa1` nối chuỗi nhớ (ripple carry).
-  - `B_eff[i] = B[i] XOR Sub` → 24 cổng `XOR` (hoặc dùng `mux2_1` nếu muốn rõ ý).
-  - `Cin` của `fa1` bit 0 = `Sub`.
-  - `Cout` của `fa1` bit i → `Cin` của `fa1` bit i+1.
-  - `S[i] = S` của `fa1` bit i.
-- **Không ghép từ `addsub8`**: `addsub8` không có `Cin` nên không truyền nhớ được.
-- Kiểm nhanh: `Sub=0, A=5, B=3` → `S=8`; `Sub=1, A=5, B=3` → `S=2`;
-  `Sub=1, A=0, B=1` → `S=0xFFFFFF` (đúng bù 2 của −1).
+
+**Cách nhanh — ghép 3 × `addsub8c`** (khuyến nghị, đã mô phỏng PASS): sửa `addsub8` thành
+`addsub8c` bằng cách **thêm một cổng vào `Cin`** và nối nó vào chân `Cin` của `FA1` thấp
+nhất (thay cho nhánh `Sub`); `Sub` vẫn nối vào 8 cổng `XOR`. RTL Quartus sinh ra xác nhận
+`FA0.Cin = Sub` và **không có** `Cin` ra ngoài — nên phải thêm.
+
+```
+byte0: A[7:0]   B[7:0]   Cin = Sub,  Sub
+byte1: A[15:8]  B[15:8]  Cin = Cout0
+byte2: A[23:16] B[23:16] Cin = Cout1
+```
+`Sub` nối chung cả 3. Khi dùng đơn lẻ thì nối `Cin = Sub` → hành vi y `addsub8` gốc.
+
+**Cách vẽ từ cổng** (nếu giảng viên yêu cầu): 24 × `fa1` nối chuỗi nhớ.
+  - `B_eff[i] = B[i] XOR Sub` → 24 cổng `XOR`.
+  - `Cin` của `fa1` bit 0 = `Sub`; `Cout` bit i → `Cin` bit i+1.
+
+- **Kiểm bắt buộc (đã chạy, 8/8 PASS):**
+
+| `Sub` | `A` | `B` | `S` |
+|---|---|---|---|
+| 0 | 5 | 3 | 8 |
+| 1 | 5 | 3 | 2 |
+| 1 | 0 | 1 | `0xFFFFFF` (−1) |
+| 0 | `0x0000FF` | `0x000001` | `0x000100` ← **ca chứng minh `Cin` đã nối đúng** |
+| 0 | `0x00FFFF` | `0x000001` | `0x010000` (nhớ xuyên 2 byte) |
 
 ## 1.6 `shifter24` — dịch phải số học 24 bit, 4 tầng
 
@@ -130,18 +168,32 @@ Không cần mô phỏng từng khối — tầng 3 sẽ phủ hết.
 
 ## 2.1 `counter4` — bộ đếm 4 bit
 
-- **Cổng**: `CLK, RST, LOAD, EN` → `Q[3:0]`
-- **Bên trong**: 4 `DFFE` + 4 `fa1` (cộng 1) + mux chọn `0 / Q+1`; `LOAD` nạp 0, `EN` đếm.
-- Mẫu: `blocks/count2.bdf` (2 bit, có `LOAD`/`STEP`/`LAST`) — mở rộng lên 4 bit, và đổi
-  reset sang đồng bộ mức cao như 1.4.
-- **Không cần chức năng `LAST`**: tín hiệu dừng do `cmp_i15` lo.
+- **Cổng**: `CLK, RST, LOAD_I, INC_I` → `Q[3:0]`, `LAST0`, `LAST1`
+- **Cách rẻ nhất: ghép 2 × `blocks/count2`**, không vẽ mới. RTL Quartus sinh ra cho thấy
+  `EN_C = LOAD | STEP`, `DC = INC & ~LOAD`, `LAST = COUNT[1] & COUNT[0]` → **`LOAD=1` nạp 0
+  đồng bộ**, `STEP=0` thì giữ nguyên.
 
-## 2.2 `cmp_i15` — so sánh `i == 15`
+| Chân | Khối 0 (2 bit thấp) | Khối 1 (2 bit cao) |
+|---|---|---|
+| `CLK` | `CLK` | `CLK` |
+| `RST_N` | `VCC` | `VCC` |
+| `LOAD` | `RST OR LOAD_I` | `RST OR LOAD_I` |
+| `STEP` | `INC_I` | `LAST0` của khối 0 |
+
+`Q[3:0] = {COUNT1, COUNT0}`. Vì `LOAD` là chân nạp **đồng bộ**, `RST` ở đây đồng bộ — đúng spec.
+
+**Đã mô phỏng, 31/31 PASS:** reset qua `LOAD`, đếm 0→15, tràn về 0, giữ khi `STEP=0`,
+`LOAD_I` chỉ xoá ở cạnh clock.
+
+> **Bỏ luôn `cmp_i15` được:** `I15 = LAST0 AND LAST1` — **một** cổng `AND2`
+> (`LAST0` = `Q[1:0]=3`, `LAST1` = `Q[3:2]=3`). Rẻ hơn `cmp15` (3 cổng).
+
+## 2.2 `cmp_i15` — so sánh `i == 15` (chỉ dùng nếu không lấy `LAST0 & LAST1`)
 
 - **Cổng**: `I[3:0]` → `EQ`
 - **Bên trong**: `EQ = I[3] AND I[2] AND I[1] AND I[0]` — 3 cổng `AND2` nối tầng.
-- Mẫu: `blocks/eq4_07.bdf` (so với 7). **Đổi hằng 7 → 15**: với 7 thì bit 3 = 0 nên có
-  `NOT`; với 15 thì cả bốn bit = 1 nên chỉ cần AND.
+- `blocks/eq4_07.bdf` **không dùng được**: RTL sinh ra là `EQ = (A0·A1)·(A2·¬A3)` → so với
+  **7**, và có `NOT` ở bit 3. Đừng sửa — vẽ mới nhanh hơn.
 
 ## 2.3 `rom_atan` — bảng góc 16 × 24 bit
 
