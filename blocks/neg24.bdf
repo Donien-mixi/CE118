@@ -1,0 +1,152 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+(header "graphic" (version "1.4"))
+(pin
+	(input)
+	(rect 64 64 232 80)
+	(text "INPUT" (rect 125 0 153 10)(font "Arial" (font_size 6)))
+	(text "A[23..0]" (rect 5 0 69 14)(font "Arial" (font_size 8)))
+	(pt 168 8)
+	(drawing
+		(line (pt 84 12)(pt 109 12))
+		(line (pt 84 4)(pt 109 4))
+		(line (pt 113 8)(pt 168 8))
+		(line (pt 84 12)(pt 84 4))
+		(line (pt 109 4)(pt 113 8))
+		(line (pt 109 12)(pt 113 8))
+	)
+	(text "VCC" (rect 128 7 148 17)(font "Arial" (font_size 6)))
+)
+(connector
+	(text "A[23..0]" (rect 184 58 248 72)(font "Arial" (font_size 8)))
+	(pt 184 72)
+	(pt 232 72)
+	(bus)
+)
+(pin
+	(output)
+	(rect 1920 160 2088 176)
+	(text "OUTPUT" (rect 1 0 39 10)(font "Arial" (font_size 6)))
+	(text "Q[23..0]" (rect 5 0 69 12)(font "Arial" (font_size 8)))
+	(pt 0 8)
+	(drawing
+		(line (pt 0 8)(pt 52 8))
+		(line (pt 52 4)(pt 78 4))
+		(line (pt 52 12)(pt 78 12))
+		(line (pt 52 12)(pt 52 4))
+		(line (pt 78 4)(pt 82 8))
+		(line (pt 82 8)(pt 78 12))
+		(line (pt 78 12)(pt 82 8))
+	)
+)
+(connector
+	(text "Q[23..0]" (rect 1920 154 1984 168)(font "Arial" (font_size 8)))
+	(pt 1920 168)
+	(pt 1968 168)
+	(bus)
+)
+(symbol
+	(rect 640 64 760 160)
+	(text "not_8bit" (rect 1 0 40 10)(font "Arial" (font_size 6)))
+	(text "u_b0" (rect 3 84 35 94)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "I[7..0]" (rect 0 0 30 14)(font "Arial" (font_size 8)))
+		(text "I[7..0]" (rect 21 27 51 41)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 120 32)
+		(output)
+		(text "O[7..0]" (rect 0 0 37 14)(font "Arial" (font_size 8)))
+		(text "O[7..0]" (rect 62 27 99 41)(font "Arial" (font_size 8)))
+		(line (pt 120 32)(pt 104 32)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 104 80))
+	)
+)
+(connector
+	(text "A[7..0]" (rect 592 82 648 96)(font "Arial" (font_size 8)))
+	(pt 592 96)
+	(pt 640 96)
+	(bus)
+)
+(connector
+	(text "Q[7..0]" (rect 760 82 816 96)(font "Arial" (font_size 8)))
+	(pt 760 96)
+	(pt 808 96)
+	(bus)
+)
+(symbol
+	(rect 640 224 760 320)
+	(text "not_8bit" (rect 1 0 40 10)(font "Arial" (font_size 6)))
+	(text "u_b1" (rect 3 84 35 94)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "I[7..0]" (rect 0 0 30 14)(font "Arial" (font_size 8)))
+		(text "I[7..0]" (rect 21 27 51 41)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 120 32)
+		(output)
+		(text "O[7..0]" (rect 0 0 37 14)(font "Arial" (font_size 8)))
+		(text "O[7..0]" (rect 62 27 99 41)(font "Arial" (font_size 8)))
+		(line (pt 120 32)(pt 104 32)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 104 80))
+	)
+)
+(connector
+	(text "A[15..8]" (rect 592 242 656 256)(font "Arial" (font_size 8)))
+	(pt 592 256)
+	(pt 640 256)
+	(bus)
+)
+(connector
+	(text "Q[15..8]" (rect 760 242 824 256)(font "Arial" (font_size 8)))
+	(pt 760 256)
+	(pt 808 256)
+	(bus)
+)
+(symbol
+	(rect 640 384 760 480)
+	(text "not_8bit" (rect 1 0 40 10)(font "Arial" (font_size 6)))
+	(text "u_b2" (rect 3 84 35 94)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "I[7..0]" (rect 0 0 30 14)(font "Arial" (font_size 8)))
+		(text "I[7..0]" (rect 21 27 51 41)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 120 32)
+		(output)
+		(text "O[7..0]" (rect 0 0 37 14)(font "Arial" (font_size 8)))
+		(text "O[7..0]" (rect 62 27 99 41)(font "Arial" (font_size 8)))
+		(line (pt 120 32)(pt 104 32)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 104 80))
+	)
+)
+(connector
+	(text "A[23..16]" (rect 592 402 664 416)(font "Arial" (font_size 8)))
+	(pt 592 416)
+	(pt 640 416)
+	(bus)
+)
+(connector
+	(text "Q[23..16]" (rect 760 402 832 416)(font "Arial" (font_size 8)))
+	(pt 760 416)
+	(pt 808 416)
+	(bus)
+)

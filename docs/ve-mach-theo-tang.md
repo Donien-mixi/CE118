@@ -42,7 +42,28 @@ skill `ce118-cordic-spec` (con số), `ce118-report-vn` (cách trình bày).
 
 ---
 
-# Tầng 1 — khối cơ sở (8 khối phải vẽ)
+# Tầng 1 — khối cơ sở (ĐÃ XONG 2026-11-27)
+
+**14 khối đã sinh, compile và mô phỏng xong** — xem `blocks/README.md` mục "Khối tầng 1".
+Phần dưới giữ lại làm **đặc tả chức năng** để đối chiếu khi sửa tay hoặc vẽ lại.
+
+| Khối | Trạng thái | Bằng chứng |
+|---|---|---|
+| `mux2_16`, `mux2_24`, `mux4_24` | ✅ xong | compile PASS, `mux2_24`/`mux4_24` mô phỏng đúng thứ tự byte |
+| `reg8_sync`, `reg16`, `reg24` | ✅ xong | 16/16 + 5 checks; `RST` xoá được dù `EN=0` |
+| `addsub8c`, `add_sub24` | ✅ xong | 8 ca, có `0x00FFFF+1 = 0x010000` |
+| `neg24` | ✅ xong | `~A`, mô phỏng 3 ca |
+| `shift1/2/4/8`, `shifter24` | ✅ xong | 10 ca, có `-16 >> 5 = -1` |
+
+Điều kiện qua tầng đã đạt: 14/14 compile 0 lỗi + 39 check mô phỏng PASS.
+
+Thiết kế thực tế đã dùng vài chỗ gọn hơn đặc tả dưới đây:
+
+- `shifter24` chia thành 4 khối con `shift8/4/2/1`, mỗi khối 24 × `mux2_1` — dễ đọc và dễ
+  sửa hơn một khối 96 mux.
+- `add_sub24` ghép 3 × `addsub8c` (16 symbol) thay vì 24 × `fa1` (48 symbol).
+- `neg24` chỉ đảo bit; **cộng 1 làm ở tầng trên** khi cần bù 2.
+
 
 Đây là các khối nhỏ nhất dùng lại được. Vẽ đúng tầng này thì các tầng trên chỉ là nối dây.
 

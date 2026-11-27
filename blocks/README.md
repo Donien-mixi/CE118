@@ -92,6 +92,36 @@ thành `counter4`. Đã mô phỏng PASS.
 **4. `not_8bit` là khối tổ hợp thuần** (`O = ~I`), không có reset. Ghép 3 tấn cho `neg24`;
 nhớ rằng `neg24 = NOT + 1` nên vẫn cần một bộ cộng cộng 1.
 
+## Khối tầng 1 — sinh tự động, đã compile và mô phỏng
+
+14 khối dưới đây **không gõ tay**: sinh bằng `.dsh/tools/gen_tier1.py` (script chỉ chạy
+trên máy tác giả, file `.bdf`/`.bsf` là thứ được lưu trong repo). Mở bằng Quartus là thấy
+sơ đồ bình thường và sửa tay được.
+
+| Khối | Cổng | Vai trò |
+|---|---|---|
+| `mux2_16` | `D0,D1[15:0], Sel → Y[15:0]` | 2 × `mux2_8` |
+| `mux2_24` | `D0,D1[23:0], Sel → Y[23:0]` | 3 × `mux2_8` |
+| `mux4_24` | `D0..D3[23:0], Sel[1:0] → Y[23:0]` | 3 × `mux4_8` |
+| `neg24` | `A[23:0] → Q[23:0]` = `~A` | 3 × `not_8bit` (chưa cộng 1) |
+| `reg8_sync` | `D[7:0], CLK, RST, EN → Q[7:0]` | `reg8` bọc reset đồng bộ |
+| `reg16`, `reg24` | `D[..], CLK, RST, EN → Q[..]` | 2 và 3 × `reg8_sync` |
+| `addsub8c` | `A,B[7:0], Sub, Cin → Y[7:0], Cout` | 8 `fa1` + 8 `XOR`, **có `Cin`** |
+| `add_sub24` | `A,B[23:0], Sub → S[23:0]` | 3 × `addsub8c` nối nhớ |
+| `shift1/2/4/8` | `D[23:0], EN → Q[23:0]` | 24 × `mux2_1`, điền bit dấu |
+| `shifter24` | `D[23:0], SH[3:0] → Q[23:0]` | 4 tầng `shift8→4→2→1` |
+
+**Đã kiểm ngày 2026-11-27:**
+
+| Kiểm | Kết quả |
+|---|---|
+| `quartus_map`, mỗi khối làm top-level | **14/14 PASS** |
+| Mô phỏng ModelSim: `mux2_24`, `mux4_24`, `neg24`, `reg8_sync` | **16/16 checks PASS** |
+| Mô phỏng: `add_sub24` (8 ca), `shifter24` (10 ca), `reg24` (5 ca) | **23/23 checks PASS** |
+
+Ba ca đáng chú ý: `0x00FFFF + 1 = 0x010000` (nhớ xuyên 2 byte), `-16 >> 5 = -1`
+(dịch số học không được ra 0), và `RST` xoá được **dù `EN = 0`**.
+
 ## Cách đưa vào project Quartus
 
 1. Chép cả `blocks/` cạnh project, hoặc thêm đường dẫn tìm kiếm:

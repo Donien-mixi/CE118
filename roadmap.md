@@ -105,7 +105,7 @@ Tầng 1  add_sub24, shifter24, neg24, mux2_16, mux2_24, mux4_24, reg16, reg24
 
 | Tầng | Khối phải vẽ | Điều kiện qua tầng |
 |---|---|---|
-| 1 — cơ sở | 8 (`add_sub24`, `shifter24`, `neg24`, `mux2_16`, `mux2_24`, `mux4_24`, `reg16`, `reg24`) | `quartus_map` 0 lỗi; `add_sub24`/`shifter24` đúng 3 giá trị kiểm |
+| 1 — cơ sở | ✅ **XONG 2026-11-27**: 14 khối (`add_sub24`, `shifter24` + 4 tầng con, `neg24`, `mux2_16`, `mux2_24`, `mux4_24`, `reg16`, `reg24`, `reg8_sync`, `addsub8c`) | 14/14 compile PASS; 39 check mô phỏng PASS |
 | 2 — chức năng | 6 (`counter4`, `cmp_i15`, `rom_atan`, `quadrant_mux`, `round_q14`, `const_x0`) | 0 lỗi; `round_q14` đúng 6 giá trị kiểm |
 | 3 — khối lớn | 2 (`datapath`, `controller`) | testbench 4.096 vector PASS, đúng **18 chu kỳ** `start→done` |
 | 4 — top | 1 (`cordic_sincos`) | sweep **65.536 mã** PASS + có `qor.json` + ảnh waveform → **RTL đóng băng** |
