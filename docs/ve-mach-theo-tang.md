@@ -32,9 +32,13 @@ skill `ce118-cordic-spec` (con số), `ce118-report-vn` (cách trình bày).
 | `reg8` | 2 tấn → `reg16`, 3 tấn → `reg24` (**phải sửa reset, §1.4**) — ⚠️ reset bất đồng bộ mức thấp |
 | `decoder2_4` | giải mã 3 trạng thái trong `controller` — ✅ `W0..W3` ứng `00,01,10,11` |
 | `addsub8` | ⚠️ thiếu `Cin` → **sửa thành `addsub8c`** rồi ghép 3 tấn (`§1.5`) — đã mô phỏng PASS |
-| `eq4_07` | ❌ **không dùng**: so với **7**, `EQ=(A0·A1)(A2·¬A3)`. Vẽ `cmp15` mới |
 | `count2` | ✅ **dùng trực tiếp**: ghép 2 tấn → `counter4`, `LOAD=1` nạp 0 đồng bộ |
-| `state_to_hex` | ❌ **không dùng**: đã chuyển sang Verilog, thấy `H1=0` cố định và `H0=H3` → **không phải** giải mã số 0–3. Viết `seg7` mới |
+| `not_8bit` | ✅ ghép 3 tấn → `neg24`, và dùng trong `quadrant_mux` (nguồn: `Lab6`) |
+| `HA` | ✅ nửa bộ cộng cho bit LSB của `counter4`/bộ tăng (nguồn: `Lab6`) |
+| ~~`eq4_07`~~, ~~`state_to_hex`~~ | ❌ **đã xoá khỏi `blocks/`**: `eq4_07` so với 7; `state_to_hex` có `H1=0` cố định nên không phải giải mã số. Lý do đầy đủ: `blocks/README.md` |
+
+`blocks/reference/lab6-rom/` giữ `ROM.vhd` + `ROM.mif` của Lab6 làm **mẫu LPM_ROM** cho
+`rom_atan` (xem §2.3), không phải khối để compile.
 
 ---
 
@@ -147,9 +151,10 @@ Mỗi tầng: `Q = SHK ? (cur >>> K) : cur`, với `>>> K` **điền bằng bit 
 ## 1.7 `neg24` — đảo dấu bù 2
 
 - **Cổng**: `A[23:0]` → `Q[23:0]`
-- **Bên trong**: `Q = NOT A + 1` → 24 cổng `NOT` + 1 `add_sub24` (nối `B=0, Sub=1, Cin`
-  vào bit 0), hoặc 24 `fa1` với `Sub=1`.
-- Dùng ở: `quadrant_mux` (tạo `−s`, `−c`) và `round_q14` (lấy trị tuyệt đối).
+- **Bên trong**: `Q = NOT A + 1` → **3 × `not_8bit`** (ghép 3 tấn cho 24 bit) rồi cộng 1 bằng
+  một bộ cộng (dùng lại `add_sub24` với `B = 0`, `Sub = 1`) — hoặc dùng `add_sub24` với
+  `A = 0`, `B = A`, `Sub = 1` (một symbol).
+- `not_8bit` lấy từ `blocks/`, không phải vẽ 24 cổng `NOT` bằng tay.
 
 ## 1.8 `mux4_24` — mux 4:1, 24 bit
 
@@ -206,8 +211,11 @@ Không cần mô phỏng từng khối — tầng 3 sẽ phủ hết.
 & $py .dsh\skills\ce118-cordic-spec\scripts\gen_constants.py --markdown   # lấy A[i]
 ```
 
-  rồi ghi 16 dòng `d[23:0]` theo thứ tự `i = 0…15` vào `rom_atan.mif` (định dạng
+  rồi ghi 16 dòng theo thứ tự `i = 0…15` vào `rom_atan.mif` (định dạng
   `WIDTH=24; DEPTH=16; ADDRESS_RADIX=UNS; DATA_RADIX=UNS;`).
+- **Mẫu có sẵn:** `blocks/reference/lab6-rom/ROM.mif` + `ROM.vhd` là một ROM do Megafunction
+  Wizard sinh đúng phiên bản Quartus này. Chỉ cần đổi `WIDTH=24`, `DEPTH=16`, address còn
+  4 bit — không phải mò cấu hình.
 - **Không gắn reset vào ROM.** Gắn reset vào mảng → Quartus không suy ra block RAM mà
   dựng bằng 384 flip-flop, bảng tài nguyên sai.
 - Nếu giảng viên bắt vẽ từ cổng: dùng 16 ngõ ra hằng + `mux32_32` kiểu `imem32x32` của

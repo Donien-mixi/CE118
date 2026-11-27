@@ -90,7 +90,7 @@ Trong buổi đầu, điền người phụ trách và hạn nộp, xác nhận 
 
 ## 7. Vẽ mạch theo tầng (từ `blocks/` lên top)
 
-Mạch được dựng **bottom-up** thành 4 tầng, tổng **23 khối**: 6 khối dùng lại từ lab cũ (trong `blocks/`) và 17 khối vẽ mới. Hướng dẫn vẽ từng khối, nối dây từng chân và bảng tra lỗi nằm ở **`docs/ve-mach-theo-tang.md`** — đọc file đó trước khi mở Quartus.
+Mạch được dựng **bottom-up** thành 4 tầng: **10 khối dùng lại** từ lab cũ (trong `blocks/`) và **17 khối vẽ mới**. Hướng dẫn vẽ từng khối, nối dây từng chân và bảng tra lỗi nằm ở **`docs/ve-mach-theo-tang.md`** — đọc file đó trước khi mở Quartus.
 
 ```text
 Tầng 4  cordic_sincos.bdf
@@ -111,7 +111,11 @@ Tầng 1  add_sub24, shifter24, neg24, mux2_16, mux2_24, mux4_24, reg16, reg24
 | 4 — top | 1 (`cordic_sincos`) | sweep **65.536 mã** PASS + có `qor.json` + ảnh waveform → **RTL đóng băng** |
 | 5 — tùy chọn DE2 | 5 (`sync2`, `edge_detect`, `mul10000`, `bin2bcd_dd`, `seg7`) | ảnh KIT kèm mã `SW` |
 
-**Dùng lại 6 khối** (xem `blocks/README.md`): `fa1`, `mux2_1`, `mux2_8` (ghép 2–3), `mux4_8` (ghép 3), `reg8` (ghép 2–3, **phải sửa reset**), `decoder2_4` (giải mã 3 trạng thái, khớp đúng mã `00/01/10`). `addsub8` chỉ để xem mẫu vì **thiếu `Cin`**, không ghép chuỗi được.
+**Dùng lại 10 khối** (chi tiết trong `blocks/README.md`): `fa1`, `HA`, `mux2_1`, `mux2_8` (ghép 2–3), `mux4_8` (ghép 3), `not_8bit` (ghép 3 → `neg24`), `reg8` (ghép 2–3, **phải bọc `reg8_sync`**: `RESET_N=VCC`, `D_eff = RST?0:D`, **và `EN_eff = EN OR RST`**), `addsub8` (**sửa thêm `Cin`** → `addsub8c` rồi ghép 3), `count2` (ghép 2 → `counter4`, `LOAD=1` nạp 0 đồng bộ), `decoder2_4` (giải mã 3 trạng thái, khớp đúng mã `00/01/10`).
+
+Đã **xoá** `eq4_07` (so với 7, không phải 15) và `state_to_hex` (`H1=0` cố định → không phải giải mã số) sau khi kiểm bằng cách chuyển BDF sang Verilog. `blocks/reference/lab6-rom/` giữ mẫu `ROM.vhd` + `ROM.mif` cho `rom_atan`.
+
+Đã kiểm chứng 2026-11-27: `counter4` = 2 × `count2` → **31/31 checks PASS**; `add_sub24` = 3 × `addsub8c` → PASS kể cả nhớ xuyên byte; wrapper `reg8_sync` → **11/11 PASS**.
 
 ### Ba quyết định kiến trúc đã chốt
 
